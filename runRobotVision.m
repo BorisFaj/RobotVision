@@ -24,6 +24,7 @@ clear;
 close all;
 
 addpath 'dogma';
+addpath 'wekaInterface';
 
 load('ConfigurationReleaseParticipants.mat')
 %load('ConfigurationReleaseTiny.mat')
@@ -41,6 +42,10 @@ showDatasetStats(Configuration);
 %extraerDataSet();
 %convertirMisDatos();
 
+%El ultimo parametro va true si hay que re-calcular. Si va false lo lee de
+%los ficheros.
+[train, test] = convertirAWeka(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, false);
+modelosWeka(Configuration, train, test, 53, 'RF', false);
 %wekaNB(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest);
-regresionLogistica(Configuration, featuresForTraining, objectsForTraining);
-clasificarRegresion(Configuration, featuresForTest, objectsForTest);
+%regresionLogistica(Configuration, featuresForTraining, objectsForTraining);
+%clasificarRegresion(Configuration, featuresForTest, objectsForTest);

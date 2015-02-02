@@ -55,7 +55,7 @@ function clasificarRegresion(Configuration, featuresForTest, objectsForTest)
     etiquetasY = [cellstr('-');cellstr('Ojb1');cellstr('Ojb2');cellstr('Ojb3');cellstr('Ojb4');cellstr('Ojb5');cellstr('Ojb6');cellstr('Ojb7');cellstr('Ojb8');cellstr('Media')];
     resultados = [etiquetasX;resultados];
     resultados = [etiquetasY,resultados];
-    resultados = [resultados(:,1:2),resultados(:,4),resultados(:,7),resultados(:,6),resultados(:,8:9)]
+    %resultados = [resultados(:,1:2),resultados(:,4),resultados(:,7),resultados(:,6),resultados(:,8:9)]
     save resultadosRegresion.mat resultados    
 end
 

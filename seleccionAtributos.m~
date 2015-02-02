@@ -1,0 +1,1 @@
+function [featuresForTraining, featuresForTest, objectsForTraining, objectsForTest] = seleccionAtributos(featuresForTraining, featuresForTest, objectsForTraining, objectsForTest);

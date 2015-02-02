@@ -34,7 +34,7 @@ for m=1:Configuration.numObjects
     test =  matlab2weka(strcat('obj',strcat(int2str(m),'-test')),nombres,[num2cell(featuresForTest) clasesTest(m,:)']);
 
     %Train the classifier
-    nb = trainWekaClassifier(train,'bayes.NaiveBayesMultinomial');
+    nb = trainWekaClassifier(train,'bayes.NaiveBayes');
 
     %Test the classifier
     predicted = wekaClassify(test,nb);
