@@ -26,8 +26,13 @@ close all;
 addpath 'dogma';
 addpath 'wekaInterface';
 
-load('ConfigurationReleaseParticipants.mat')
-%load('ConfigurationReleaseTiny.mat')
+%Se agrega dinamicamente el classpath the weka
+dpath = {'wekaInterface/weka.jar'};
+javaclasspath('-v1');
+javaclasspath(dpath)
+
+%load('ConfigurationReleaseParticipants.mat')
+load('ConfigurationReleaseTiny.mat')
 
 Configuration.visualizeImageInfo = false;
 
@@ -45,7 +50,6 @@ showDatasetStats(Configuration);
 %El ultimo parametro va true si hay que re-calcular. Si va false lo lee de
 %los ficheros.
 [train, test] = convertirAWeka(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, false);
-modelosWeka(Configuration, train, test, 53, 'RF', false);
-%wekaNB(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest);
-%regresionLogistica(Configuration, featuresForTraining, objectsForTraining);
-%clasificarRegresion(Configuration, featuresForTest, objectsForTest);
+modelosWeka(Configuration, train, test, size(featuresForTraining,2)+1, 'RF', true, true);
+modelosWeka(Configuration, train, test, size(featuresForTraining,2)+1, 'RL', true, true);
+modelosWeka(Configuration, train, test, size(featuresForTraining,2)+1, 'NB', true, true);
