@@ -43,7 +43,7 @@ showDatasetStats(Configuration);
 % Seleccion de caracteristicas
 [featuresForTraining, featuresForTest] = seleccionCaracteristicas(featuresForTraining, featuresForTest);
 
-% Exportacion a arff
+%Exportacion a arff
 %extraerDataSet();
 %convertirMisDatos();
 
