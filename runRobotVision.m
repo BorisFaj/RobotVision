@@ -35,13 +35,14 @@ javaclasspath(dpath)
 load('ConfigurationReleaseTiny.mat')
 
 Configuration.visualizeImageInfo = false;
+Configuration.useDepth = true;
 
 showDatasetStats(Configuration);
 
 [featuresForTraining, featuresForTest, clasesForTraining, clasesForTest, objectsForTraining, objectsForTest] = featureExtraction (Configuration);
 
 % Seleccion de caracteristicas
-[featuresForTraining, featuresForTest] = seleccionCaracteristicas(featuresForTraining, featuresForTest);
+[featuresForTraining, featuresForTest] = seleccionCaracteristicas(Configuration, featuresForTraining, featuresForTest);
 
 %Exportacion a arff
 %extraerDataSet();
@@ -50,6 +51,7 @@ showDatasetStats(Configuration);
 %El ultimo parametro va true si hay que re-calcular. Si va false lo lee de
 %los ficheros.
 [train, test] = convertirAWeka(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, false);
-modelosWeka(Configuration, train, test, size(featuresForTraining,2)+1, 'RF', true, true);
-modelosWeka(Configuration, train, test, size(featuresForTraining,2)+1, 'RL', true, true);
-modelosWeka(Configuration, train, test, size(featuresForTraining,2)+1, 'NB', true, true);
+%modelosWeka(Configuration, train, test, size(featuresForTraining,2)+1, 'RF', true, true);
+%modelosWeka(Configuration, train, test, size(featuresForTraining,2)+1, 'RL', true, true);
+%modelosWeka(Configuration, train, test, size(featuresForTraining,2)+1, 'NB', true, true);
+busquedaHeuristica(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest);

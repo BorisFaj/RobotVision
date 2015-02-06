@@ -33,7 +33,6 @@ if(calcular)
     for m=1:Configuration.numObjects
         train(m) = matlab2weka(strcat('obj',strcat(int2str(m),'-train')),nombres,[num2cell(featuresForTraining) clasesTrain(m,:)']);
         test(m) =  matlab2weka(strcat('obj',strcat(int2str(m),'-test')),nombres,[num2cell(featuresForTest) clasesTest(m,:)']);
-        m
     end
     save trainWeka.mat train;
     save testWeka.mat test
