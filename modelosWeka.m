@@ -24,7 +24,7 @@ if(entrenar)
             error('ERROR! El parametro modelo de la funcion modelosWeka solo admite las cadenas: NB|RL|RF (Naive Bayes, Regresion Logistica, Random Forest)');
         end
 
-        save(strcat('modelo',modelo,'.mat'), 'clasificador');
+        save(strcat('modelo',modelo,'Weka.mat'), 'clasificador');
 
         if(clasificar)
             %Test the classifier
@@ -64,7 +64,7 @@ if(entrenar)
         end
     end
 else
-    load(strcat('modelo',modelo,'.mat'));
+    load(strcat('modelo',modelo,'Weka.mat'));
 end
 %Si NO se entena y SI se clasifica, no va bien porque no cuenta los TP, etc
 if(clasificar)
@@ -75,6 +75,10 @@ if(clasificar)
     FP = sum(resultados(:,7));
     FN = sum(resultados(:,8));
     total = sum(sum(resultados(:, [5 6 7 8])));
+    resultados(Configuration.numObjects+1, 5) = TP/(TP+FN)
+    resultados(Configuration.numObjects+1, 6) = TN/(TN+FP)
+    resultados(Configuration.numObjects+1, 7) = FP/(TN+FP)
+    resultados(Configuration.numObjects+1, 8) = FN/(TP+FN)
     
     resultados(Configuration.numObjects+1, 1) = TP/(TP+FN);
     resultados(Configuration.numObjects+1, 2) = TP/(TP+FP);
@@ -88,11 +92,12 @@ if(clasificar)
     %Calcular las tasas locales de TP, TN, etc (machacando los valores
     %absolutos de cada objeto)
     for n=1:Configuration.numObjects
-        total = sum(resultados(n, [5 6 7 8]));
-        resultados(n,5) = 100*(resultados(n,5)/total); %TP
-        resultados(n,6) = 100*(resultados(n,6)/total); %TN
-        resultados(n,7) = 100*(resultados(n,7)/total); %FP
-        resultados(n,8) = 100*(resultados(n,8)/total); %FN
+        totalP = sum(resultados(n, [5 8]));
+        totalN = sum(resultados(n, [6 7]));
+        resultados(n,5) = resultados(n,5)/totalP; %TP
+        resultados(n,6) = resultados(n,6)/totalN; %TN
+        resultados(n,7) = resultados(n,7)/totalN; %FP
+        resultados(n,8) = resultados(n,8)/totalP; %FN
     end
 
     %Poner las etiquetas
@@ -103,6 +108,6 @@ if(clasificar)
     resultados = [obj resultados];
     resultados = [et;resultados]
 
-    save(strcat('resultados',modelo,'.mat'), 'resultados');
+    save(strcat('resultados',modelo,'Weka.mat'), 'resultados');
 end
 end

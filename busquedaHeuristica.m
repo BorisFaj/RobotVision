@@ -18,16 +18,9 @@ y = categorical(objectsForTraining);
 %iteracion no se va a tener el cuenta ese cambio
 for m=1:Configuration.numObjects
     m = aleatorio(m);
-    %Parche al error producido porque con el dataset pequeño, no hay
-    %objetos de la clase 5 ni 7
-    if(m==5)
-        m=6;
-    elseif(m==7)
-        m=8;
-    end
        
     %Se entrenan los modelos
-    %NB = fitNaiveBayes(featuresForTraining,y(m,:)');
+    NB = fitNaiveBayes(featuresForTraining,y(m,:)');
     %predicted = NB.predict(featuresForTest);
     % Dice que la desviacion tipica es negativa en algunas caracteristicas.
     % De momento voy a suponer que con el dataset grande no pasa eso.
@@ -51,8 +44,8 @@ for m=1:Configuration.numObjects
     %predicted = RF.predict(featuresForTest)
     
     %Se sacan las predicciones
-    %predicted = [str2num(cell2mat(NB.predict(featuresForTest))) predictedRL(:,2) str2num(cell2mat(RF.predict(featuresForTest)))];
-    predicted = [predictedRL(:,2) str2num(cell2mat(RF.predict(featuresForTest)))];
+    predicted = [(double(NB.predict(featuresForTest))-1) predictedRL(:,2) str2num(cell2mat(RF.predict(featuresForTest)))];
+    %predicted = [predictedRL(:,2) str2num(cell2mat(RF.predict(featuresForTest)))];
     
     %Se obtienen las clases reales
     actual = objectsForTest(m,:)';
@@ -98,6 +91,7 @@ for m=1:Configuration.numObjects
         predicted = mnrval(RL,featuresForTraining);
         %Convertirlo a logico
         predicted = predicted(:,2);
+        predicted = predicted>=0.5;
     else
         predicted = str2num(cell2mat(RF.predict(featuresForTraining)));
     end
