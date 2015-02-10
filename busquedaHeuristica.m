@@ -24,7 +24,7 @@ for m=1:Configuration.numObjects
     elseif(m==7)
         m=8;
     end
-    
+   
     
     [train, test] = convertirAWeka(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, true);
     
@@ -95,12 +95,17 @@ solucion(9,1:4) = sum(solucion(:,1:4));
 solucion(9,5) = solucion(9,1)/(solucion(9,1)+solucion(9,4)); %recall
 solucion(9,6) = solucion(9,1)/(solucion(9,1)+solucion(9,2)); %precision
 solucion(9,7) = 2*solucion(9,6)*solucion(9,5)/(solucion(9,6)+solucion(9,5)); %FScore
-%Paso TP FP TN y FN a % en el total
-total = sum(sum(solucion(:,1:4)));
-solucion(9,1:4)=solucion(9,1:4)/total
 %Y en cada objeto
-total = sum(solucion(m,1:4));
-solucion(1:8,1:4) = solucion(1:8,1:4)/total;
+for n=1:9
+    %Los positivos
+    total = solucion(n,1) + solucion(n,4);
+    solucion(n,1) = solucion(n,1)/total;
+    solucion(n,4) = solucion(n,4)/total;
+    %Los negativos
+    total = solucion(n,2) + solucion(n,3);
+    solucion(n,2) = solucion(n,2)/total;
+    solucion(n,3) = solucion(n,3)/total;
+end
 %Añado etiquetas
 et = [cellstr('TP') cellstr('FP') cellstr('TN') cellstr('FN') cellstr('Recall') cellstr('Precision') cellstr('FScore') cellstr('Clasificador') cellstr('Objeto')];
 solucion = num2cell(solucion);

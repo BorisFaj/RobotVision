@@ -31,8 +31,8 @@ dpath = {'wekaInterface/weka.jar'};
 javaclasspath('-v1');
 javaclasspath(dpath)
 
-%load('ConfigurationReleaseParticipants.mat')
-load('ConfigurationReleaseTiny.mat')
+load('ConfigurationReleaseParticipants.mat')
+%load('ConfigurationReleaseTiny.mat')
 
 Configuration.visualizeImageInfo = false;
 Configuration.useDepth = true;
