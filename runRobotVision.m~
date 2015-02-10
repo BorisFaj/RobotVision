@@ -31,8 +31,8 @@ dpath = {'wekaInterface/weka.jar'};
 javaclasspath('-v1');
 javaclasspath(dpath)
 
-%load('ConfigurationReleaseParticipants.mat')
-load('ConfigurationReleaseTiny.mat')
+load('ConfigurationReleaseParticipants.mat')
+%load('ConfigurationReleaseTiny.mat')
 
 Configuration.visualizeImageInfo = false;
 Configuration.useDepth = true;
@@ -54,4 +54,4 @@ showDatasetStats(Configuration);
 %modelosWeka(Configuration, train, test, size(featuresForTraining,2)+1, 'RF', true, true);
 %modelosWeka(Configuration, train, test, size(featuresForTraining,2)+1, 'RL', true, true);
 %modelosWeka(Configuration, train, test, size(featuresForTraining,2)+1, 'NB', true, true);
-busquedaHeuristica(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest);
+busquedaHeuristicaWeka(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest);

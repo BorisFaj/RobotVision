@@ -25,7 +25,10 @@ for m=1:Configuration.numObjects
     elseif(m==7)
         m=8;
     end
-       
+   
+    
+    [train, test] = convertirAWeka(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, true);
+    
     %Se entrenan los modelos
     %NB = fitNaiveBayes(featuresForTraining,y(m,:)');
     %predicted = NB.predict(featuresForTest);
@@ -85,7 +88,6 @@ for m=1:Configuration.numObjects
     
     % Se saca el clasificador con mejor FScore
     [valor indice] = max(resultados(:,7));
-
     solucion = [solucion;resultados(indice,:)];
     
     % Se añade como caracteristica para el siguiente modelo (y siguiente
@@ -96,7 +98,6 @@ for m=1:Configuration.numObjects
         predicted = str2num(cell2mat(NB.predict(featuresForTraining)))
     elseif(indice==2)
         predicted = mnrval(RL,featuresForTraining);
-        %Convertirlo a logico
         predicted = predicted(:,2);
     else
         predicted = str2num(cell2mat(RF.predict(featuresForTraining)));

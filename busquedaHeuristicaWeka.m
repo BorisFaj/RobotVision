@@ -1,4 +1,4 @@
-function busquedaHeuristica(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest)
+function busquedaHeuristicaWeka(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest)
 % Se van a entrenar 3 modelos por cada objeto y nos vamos a quedar con el
 % que mejor FScore tenga, a partir de ese vamos a entrenar el siguiente
 % objeto y a proceder de la misma manera. El resultado va a estar
@@ -12,7 +12,6 @@ function busquedaHeuristica(Configuration, featuresForTraining, featuresForTest,
 solucion = [];
 aleatorio = [1:8];
 aleatorio = aleatorio(randperm(length(aleatorio))); 
-y = categorical(objectsForTraining);
 
 %Nota: aun que se cambie el valor de la m dentro del for, en la siguiente
 %iteracion no se va a tener el cuenta ese cambio
@@ -25,37 +24,24 @@ for m=1:Configuration.numObjects
     elseif(m==7)
         m=8;
     end
-       
+   
+    
+    [train, test] = convertirAWeka(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, true);
+    
     %Se entrenan los modelos
-    %NB = fitNaiveBayes(featuresForTraining,y(m,:)');
-    %predicted = NB.predict(featuresForTest);
-    % Dice que la desviacion tipica es negativa en algunas caracteristicas.
-    % De momento voy a suponer que con el dataset grande no pasa eso.
-    
-    % Normalizar X
-    mu = mean(featuresForTraining);
-    sigma = std(featuresForTraining);
-    X=bsxfun(@minus, featuresForTraining, mu);
-    X=bsxfun(@rdivide, X, sigma);
-    
-    RL = mnrfit(X,y(m,:)');
-    %Se predicen 2 columnas [falso positivo]
-    predictedRL = mnrval(RL,featuresForTest);
-    
-    rng(1); % For reproducibility
-    %Se calculan modelos con un numero de arboles de 1 a 50 con su
-    %correspondiente out of the bag error
-    RF = TreeBagger(50,featuresForTraining,y(m,:)','OOBPred','On');   
-    oobErr = oobError(RF);
-    
-    %predicted = RF.predict(featuresForTest)
+    NB = trainWekaClassifier(train(m),'bayes.NaiveBayes');
+    RL = trainWekaClassifier(train(m),'functions.Logistic');
+    RF = trainWekaClassifier(train(m),'trees.RandomForest');
     
     %Se sacan las predicciones
-    %predicted = [str2num(cell2mat(NB.predict(featuresForTest))) predictedRL(:,2) str2num(cell2mat(RF.predict(featuresForTest)))];
-    predicted = [predictedRL(:,2) str2num(cell2mat(RF.predict(featuresForTest)))];
+    % test(m)?? predigo solo una fila??
+    predicted = [wekaClassify(test(m),NB) wekaClassify(test(m),RL) wekaClassify(test(m),RF)];
     
     %Se obtienen las clases reales
-    actual = objectsForTest(m,:)';
+    actual = test(m).attributeToDoubleArray(size(featuresForTraining,2));
+    
+    errorRate = [sum(actual ~= predicted(:,1)) sum(actual ~= predicted(:,2)) sum(actual ~= predicted(:,3))]/size(predicted,1);
+    [m errorRate]
 
     %Se sacan los aciertos y los fallos
     for i=1:size(predicted,2) %modelo i
@@ -85,7 +71,6 @@ for m=1:Configuration.numObjects
     
     % Se saca el clasificador con mejor FScore
     [valor indice] = max(resultados(:,7));
-
     solucion = [solucion;resultados(indice,:)];
     
     % Se añade como caracteristica para el siguiente modelo (y siguiente
@@ -93,13 +78,11 @@ for m=1:Configuration.numObjects
     featuresForTest = [featuresForTest predicted(:,indice)];
     %Para añadirlas al training hay que clasificarlo
     if(indice==1)
-        predicted = str2num(cell2mat(NB.predict(featuresForTraining)))
+        predicted = wekaClassify(train(m),NB);
     elseif(indice==2)
-        predicted = mnrval(RL,featuresForTraining);
-        %Convertirlo a logico
-        predicted = predicted(:,2);
+        predicted = wekaClassify(train(m),RL);
     else
-        predicted = str2num(cell2mat(RF.predict(featuresForTraining)));
+        predicted = wekaClassify(train(m),RF);
     end
 
     featuresForTraining = [featuresForTraining predicted];
