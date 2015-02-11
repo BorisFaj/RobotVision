@@ -1,4 +1,4 @@
-function [FScores] = modelosMatlab(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, objetosEvaluar, modelo, entrenar, clasificar, guardar,X)
+function [FScores, resultados] = modelosMatlab(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, objetosEvaluar, modelo, entrenar, clasificar, guardar,X)
 %   Aviso: Si NO se entena y SI se clasifica, no va bien porque no cuenta los TP, etc
 %
 %   modelo: 'NB'|'RL'|'RF'
@@ -24,15 +24,13 @@ y = categorical(objectsForTraining);
                 X=bsxfun(@minus, featuresForTraining, mu);
                 X=bsxfun(@rdivide, X, sigma);  
             end
-                clasificador = mnrfit(X,y(indice,:)');
+                %clasificador = mnrfit(X,y(indice,:)');
+                clasificador = mnrfit(X,y(indice,:)','model','nominal');
         elseif(strcmp('RF',modelo))
             rng(1);
             clasificador = TreeBagger(50,featuresForTraining,y(indice,:)','OOBPred','On');
         else
             error('ERROR! El parametro modelo de la funcion modelosWeka solo admite las cadenas: NB|RL|RF (Naive Bayes, Regresion Logistica, Random Forest)');
-        end
-        if(guardar)
-            save(strcat('modelo',modelo,'Matlab.mat'), 'clasificador');
         end
 
         if(clasificar)
@@ -42,12 +40,7 @@ y = categorical(objectsForTraining);
                 predicted = predicted == 1;
             elseif(strcmp('RL',modelo))
                 predicted = mnrval(clasificador,featuresForTest);
-                %Si se predice todo negativo hay que añadir la columna de positivo
-                if(size(predicted,2)==1)
-                    fprintf('Solo hay una claseee!!!\n');
-                    predicted = [predicted predicted == 0];
-                end
-                predicted = predicted(:,2);
+                predicted = predicted(:,1);
                 predicted = predicted>=0.5;
             elseif(strcmp('RF',modelo))
                 predicted = str2num(cell2mat(clasificador.predict(featuresForTest)));                
@@ -58,7 +51,7 @@ y = categorical(objectsForTraining);
             %The actual class labels (i.e. indices thereof)
             actual = objectsForTest(indice,:)';
 
-            TP=0.01;TN=0.01;FP=0.01;FN=0.01;
+            TP=0.001;TN=0.001;FP=0.001;FN=0.001;
             for n=1:length(predicted)
                 if(predicted(n)) %se predice positivo
                     if(actual(n))    %es positivo
@@ -85,7 +78,7 @@ y = categorical(objectsForTraining);
         end
     end
 else
-    load(strcat('modelo',modelo,'Matlab.mat'));
+    load(strcat('medidas/modelo',modelo,'Matlab.mat'));
 end
 %Si NO se entena y SI se clasifica, no va bien porque no cuenta los TP, etc
 if(clasificar)
@@ -130,9 +123,9 @@ if(clasificar)
     et = [cellstr('-') cellstr('Recall') cellstr('Precision') cellstr('FScore') cellstr('Error Rate') cellstr('TP%') cellstr('TN%') cellstr('FP%') cellstr('FN%')];
 
     resultados = [obj resultados];
-    resultados = [et;resultados]
+    resultados = [et;resultados];
     if(guardar)
-        save(strcat('resultados',modelo,'Matlab.mat'), 'resultados');
+        save(strcat('medidas/resultados',modelo,'Matlab.mat'), 'resultados');
     end
 end
 end
