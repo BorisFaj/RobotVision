@@ -10,31 +10,34 @@ function busquedaHeuristica(Configuration, featuresForTraining, featuresForTest,
 % de secuencialmente.
 
 solucion = [];
-aleatorio = [1:8];
-aleatorio = aleatorio(randperm(length(aleatorio))); 
+evaluados = [];
+restantes = 1:Configuration.numObjects;
 y = categorical(objectsForTraining);
-
+% Normalizar X para la RL
+mu = mean(featuresForTraining);
+sigma = std(featuresForTraining);
+X=bsxfun(@minus, featuresForTraining, mu);
+X=bsxfun(@rdivide, X, sigma);
+%Falta decidir por que objeto se empieza
+siguiente = 1;
+restantes = [restantes(1:siguiente-1), restantes(siguiente+1:end)];
+evaluados = [evaluados siguiente];
 %Nota: aun que se cambie el valor de la m dentro del for, en la siguiente
 %iteracion no se va a tener el cuenta ese cambio
 for m=1:Configuration.numObjects
-    m = aleatorio(m);
+    m = siguiente;
        
     %Se entrenan los modelos
-    NB = fitNaiveBayes(featuresForTraining,y(m,:)');
-    %predicted = NB.predict(featuresForTest);
-    % Dice que la desviacion tipica es negativa en algunas caracteristicas.
-    % De momento voy a suponer que con el dataset grande no pasa eso.
-    
-    % Normalizar X
-    mu = mean(featuresForTraining);
-    sigma = std(featuresForTraining);
-    X=bsxfun(@minus, featuresForTraining, mu);
-    X=bsxfun(@rdivide, X, sigma);
-    
+    NB = fitNaiveBayes(featuresForTraining,y(m,:)','Distribution','kernel');
+    predictedNB = double(NB.predict(featuresForTest));
+
     RL = mnrfit(X,y(m,:)');
     %Se predicen 2 columnas [falso positivo]
     predictedRL = mnrval(RL,featuresForTest);
-    
+    if(size(predictedRL,2)==1)
+        fprintf('Solo hay una claseee!!!\n');
+        predictedRL = [predictedRL predictedRL == 0];
+    end
     rng(1); % For reproducibility
     %Se calculan modelos con un numero de arboles de 1 a 50 con su
     %correspondiente out of the bag error
@@ -44,7 +47,7 @@ for m=1:Configuration.numObjects
     %predicted = RF.predict(featuresForTest)
     
     %Se sacan las predicciones
-    predicted = [(double(NB.predict(featuresForTest))-1) predictedRL(:,2) str2num(cell2mat(RF.predict(featuresForTest)))];
+    predicted = [predictedNB == 1, predictedRL(:,2) > 0.5, str2num(cell2mat(RF.predict(featuresForTest)))];
     %predicted = [predictedRL(:,2) str2num(cell2mat(RF.predict(featuresForTest)))];
     
     %Se obtienen las clases reales
@@ -52,7 +55,9 @@ for m=1:Configuration.numObjects
 
     %Se sacan los aciertos y los fallos
     for i=1:size(predicted,2) %modelo i
-        TP=0;TN=0;FP=0;FN=0;
+        %Para poder hacer las pruebas con el dataset pequeño hay que
+        %inicializar a algo distinto de 0
+        TP=0.01;TN=0.01;FP=0.01;FN=0.01;
         for n=1:size(predicted,1) %ejemplo n
             if(predicted(n,i)) %se predice positivo
                 if(actual(n))    %es positivo
@@ -78,25 +83,60 @@ for m=1:Configuration.numObjects
     
     % Se saca el clasificador con mejor FScore
     [valor indice] = max(resultados(:,7));
+    %Si todos eran NaN, saca el mejor TN
+    if(isnan(valor))
+        [valor indice] = max(resultados(:,3));
+    end
+    %Si todos eran 0, saca el mejor TP
+    if(valor == 0)
+        [valor indice] = max(resultados(:,1));
+    end
 
     solucion = [solucion;resultados(indice,:)];
+    
+
+    %Para añadir las nuevas predicciones al training, hay que clasificarlo
+    if(indice==1)
+        nombre = 'NB';
+        predictedN = double(NB.predict(featuresForTraining));    
+        predictedN = predictedN == 1;
+    elseif(indice==2)
+        nombre = 'RL';
+        predictedN = mnrval(RL,featuresForTraining);
+        %Si se predice todo negativo hay que añadir la columna de positivo
+        if(size(predictedN,2)==1)
+            fprintf('Solo hay una claseee!!!\n');
+            predictedN = [predictedN predictedN == 0];
+        end
+        %Convertirlo a logico
+        predictedN = predictedN(:,2);
+        predictedN = predictedN>=0.5;
+    else
+        nombre = 'RF';
+        predictedN = str2num(cell2mat(RF.predict(featuresForTraining)));
+    end
+    
+    %Sacar el mejor FScore de los objetos restantes, sin tener en cuenta la
+    %nueva prediccion
+    [sinP] = modelosMatlab(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, restantes, nombre, true, true, false,X);
     
     % Se añade como caracteristica para el siguiente modelo (y siguiente
     % objeto) en training y en test
     featuresForTest = [featuresForTest predicted(:,indice)];
-    %Para añadirlas al training hay que clasificarlo
-    if(indice==1)
-        predicted = str2num(cell2mat(NB.predict(featuresForTraining)))
-    elseif(indice==2)
-        predicted = mnrval(RL,featuresForTraining);
-        %Convertirlo a logico
-        predicted = predicted(:,2);
-        predicted = predicted>=0.5;
-    else
-        predicted = str2num(cell2mat(RF.predict(featuresForTraining)));
-    end
-
-    featuresForTraining = [featuresForTraining predicted];
+    featuresForTraining = [featuresForTraining predictedN];
+    %Se añade la ultima observacion (la del predictor) SIN NORMALIZAR
+    X = [X featuresForTraining(:,size(featuresForTraining,2))];
+    
+    %Sacar el mejor FScore de los objetos restantes, teniendo en cuenta la
+    %nueva prediccion      
+    [conP] = modelosMatlab(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, restantes, nombre, true, true, false,X);
+    
+    %Decidir el proximo objeto
+    [valor siguiente] = max(conP-sinP);
+    
+    %Actualizar listas de control
+    restantes = [restantes(1:siguiente-1), restantes(siguiente+1:end)];
+    evaluados = [evaluados siguiente];
    
     save solucionH.mat solucion;
 end
