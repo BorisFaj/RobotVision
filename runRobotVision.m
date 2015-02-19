@@ -31,8 +31,8 @@ dpath = {'wekaInterface/weka.jar'};
 javaclasspath('-v1');
 javaclasspath(dpath)
 
-load('ConfigurationReleaseParticipants.mat')
-%load('ConfigurationReleaseTiny.mat')
+%load('ConfigurationReleaseParticipants.mat')
+load('ConfigurationReleaseTiny.mat')
 
 Configuration.visualizeImageInfo = false;
 Configuration.useDepth = true;
@@ -43,6 +43,7 @@ showDatasetStats(Configuration);
 
 % Seleccion de caracteristicas
 [featuresForTraining, featuresForTest] = seleccionCaracteristicas(Configuration, featuresForTraining, featuresForTest);
+aPriori(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest);
 
 %Exportacion a arff
 %extraerDataSet();
