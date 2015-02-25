@@ -26,7 +26,7 @@ for m=1:Configuration.numObjects+1
             %Se predicen 2 columnas [falso positivo]
             predictedRL = mnrval(RL,featuresForTest);
             %Sacar las predicciones
-            predicted = predictedRL(:,1) > 0.5;
+            predicted = predictedRL(:,1) < 0.5;
         elseif(strcmp('RF',modelo))            
             %Entrenar modelo
             rng(1); % For reproducibility
@@ -35,7 +35,7 @@ for m=1:Configuration.numObjects+1
             RF = TreeBagger(50,featuresForTraining,y(siguiente,:)','OOBPred','On');   
             oobErr = oobError(RF);
             %Sacar las predicciones
-            predicted = str2num(cell2mat(RF.predict(featuresForTest)));
+            predicted = str2num(cell2mat(RF.predict(featuresForTest)));z
         end
 
         %Se obtienen las clases reales
@@ -80,7 +80,7 @@ for m=1:Configuration.numObjects+1
             predicted = mnrval(RL,featuresForTraining);
             %Si se predice todo negativo hay que añadir la columna de positivo
             %Convertirlo a logico
-            predicted = predicted(:,1)>=0.5;
+            predicted = predicted(:,1)<=0.5;
         elseif(strcmp('RF',modelo))
             predicted = str2num(cell2mat(RF.predict(featuresForTraining)));
         end

@@ -41,7 +41,7 @@ y = categorical(objectsForTraining);
             elseif(strcmp('RL',modelo))
                 predicted = mnrval(clasificador,featuresForTest);
                 predicted = predicted(:,1);
-                predicted = predicted>=0.5;
+                predicted = predicted<=0.5;
             elseif(strcmp('RF',modelo))
                 predicted = str2num(cell2mat(clasificador.predict(featuresForTest)));                
             else

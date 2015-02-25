@@ -31,12 +31,13 @@ dpath = {'wekaInterface/weka.jar'};
 javaclasspath('-v1');
 javaclasspath(dpath)
 
-load('ConfigurationReleaseParticipants.mat')
-%load('ConfigurationReleaseTiny.mat')
+%load('ConfigurationReleaseParticipants.mat')
+load('ConfigurationReleaseTiny.mat')
 
 Configuration.visualizeImageInfo = false;
 Configuration.useDepth = true;
 
+%Muestra informacion sobre el TESTset
 showDatasetStats(Configuration);
 
 [featuresForTraining, featuresForTest, clasesForTraining, clasesForTest, objectsForTraining, objectsForTest] = featureExtraction (Configuration);
@@ -56,4 +57,4 @@ showDatasetStats(Configuration);
 %busquedaHeuristica(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest,1,0);
 %busquedaHeuristica(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest,0,8);
 
-chainsClassifier(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, 'RF');
+chainsClassifier(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, 'RL');
