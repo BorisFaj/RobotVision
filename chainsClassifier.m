@@ -18,7 +18,7 @@ for m=1:Configuration.numObjects+1
             %Entrenar modelo
             NB = fitNaiveBayes(featuresForTraining,y(siguiente,:)','Distribution','kernel');            
             %Sacar las predicciones
-            predictedNB = double(NB.predict(featuresForTest));
+            predictedNB = (double(NB.predict(featuresForTest))-1);
             predicted = predictedNB == 1;
         elseif(strcmp('RL',modelo))
             %Entrenar modelo
@@ -35,7 +35,15 @@ for m=1:Configuration.numObjects+1
             RF = TreeBagger(50,featuresForTraining,y(siguiente,:)','OOBPred','On');   
             oobErr = oobError(RF);
             %Sacar las predicciones
-            predicted = str2num(cell2mat(RF.predict(featuresForTest)));z
+            predicted = str2num(cell2mat(RF.predict(featuresForTest)));
+        elseif(strcmp('DT',modelo))
+            DT = fitctree(X,y(siguiente,:)');
+            predicted = DT.predict(featuresForTest);
+            predicted = predicted == categorical(1);
+        elseif(strcmp('SVM',modelo))
+            SVM = fitcsvm(X,y(siguiente,:)');
+            [label,score] = predict(SVM,featuresForTest);
+            predicted = label == categorical(1);                 
         end
 
         %Se obtienen las clases reales
@@ -65,9 +73,7 @@ for m=1:Configuration.numObjects+1
             %                 TP FP TN FN Recall Precision FScore clasificador
             resultados(m-1,:) = [TP FP TN FN recall precision FScore siguiente];
         end      
-        if(numel(restantes)>0)   
-            [sinP resultadosH] = modelosMatlab(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, restantes, modelo, true, true, false,X);        
-        end
+
         %Se añade como caracteristica la prediccion realizada al TestSet
         featuresForTest = [featuresForTest predicted];
 
@@ -83,6 +89,12 @@ for m=1:Configuration.numObjects+1
             predicted = predicted(:,1)<=0.5;
         elseif(strcmp('RF',modelo))
             predicted = str2num(cell2mat(RF.predict(featuresForTraining)));
+        elseif(strcmp('DT',modelo))
+            predicted = DT.predict(featuresForTraining);    
+            predicted = predicted == categorical(1);
+        elseif(strcmp('SVM',modelo))
+            [label,score] = predict(SVM,featuresForTraining);
+            predicted = label == categorical(1);                      
         end
 
         featuresForTraining = [featuresForTraining predicted];
@@ -96,12 +108,7 @@ for m=1:Configuration.numObjects+1
         [conP resultadosC] = modelosMatlab(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, restantes, modelo, true, true, false,X);        
 
         %Decidir el proximo objeto
-        %[valor indice] = max(conP);
-        if(numel(restantes)<Configuration.numObjects)
-            [valor indice] = max((conP-sinP).*(conP+sinP));
-        else
-            [valor indice] = max(conP);
-        end        
+        [valor indice] = max(conP);
         siguiente = restantes(indice);
 
         %Actualizar listas de control
@@ -131,4 +138,8 @@ end
 et = [cellstr('TP') cellstr('FP') cellstr('TN') cellstr('FN') cellstr('Recall') cellstr('Precision') cellstr('FScore') cellstr('Objeto')];
 resultados = num2cell(resultados);
 resultados = [et;resultados]
+
+save(strcat('medidas/Chains',modelo,'.mat'), 'resultados');
+save(strcat('datos/prediccionesTraining',modelo,'.mat'), 'featuresForTraining');
+save(strcat('datos/prediccionesTest',modelo,'.mat'), 'featuresForTest');
 end

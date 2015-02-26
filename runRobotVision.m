@@ -24,6 +24,7 @@ clear;
 close all;
 
 addpath 'dogma';
+addpath 'datos';
 addpath 'wekaInterface';
 
 %Se agrega dinamicamente el classpath the weka
@@ -31,8 +32,14 @@ dpath = {'wekaInterface/weka.jar'};
 javaclasspath('-v1');
 javaclasspath(dpath)
 
-%load('ConfigurationReleaseParticipants.mat')
-load('ConfigurationReleaseTiny.mat')
+load('ConfigurationReleaseParticipants.mat')
+%load('ConfigurationReleaseTiny.mat')
+load('featuresForTraining.mat')
+load('featuresForTest.mat')
+load('clasesForTraining.mat')
+load('clasesForTest.mat')
+load('objectsForTraining.mat')
+load('objectsForTest.mat')
 
 Configuration.visualizeImageInfo = false;
 Configuration.useDepth = true;
@@ -40,7 +47,7 @@ Configuration.useDepth = true;
 %Muestra informacion sobre el TESTset
 showDatasetStats(Configuration);
 
-[featuresForTraining, featuresForTest, clasesForTraining, clasesForTest, objectsForTraining, objectsForTest] = featureExtraction (Configuration);
+%[featuresForTraining, featuresForTest, clasesForTraining, clasesForTest, objectsForTraining, objectsForTest] = featureExtraction (Configuration);
 
 % Seleccion de caracteristicas
 [featuresForTraining, featuresForTest] = seleccionCaracteristicas(Configuration, featuresForTraining, featuresForTest);
@@ -50,11 +57,16 @@ showDatasetStats(Configuration);
 %extraerDataSet();
 %convertirMisDatos();
 
-%modelosMatlab(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, 1:8, 'NB', true, true, true,0)
-%modelosMatlab(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, 1:8, 'RL', true, true, true,0)
-%modelosMatlab(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, 1:8, 'RF', true, true, true,0)
+%mu = mean(featuresForTraining);
+%sigma = std(featuresForTraining);
+%X=bsxfun(@minus, featuresForTraining, mu);
+%X=bsxfun(@rdivide, X, sigma);
+%modelosMatlab(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, 1:8, 'RL', true, true, true,X);        
+%modelosMatlab(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, 1:8, 'RF', true, true, true,X);        
+%modelosMatlab(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, 1:8, 'NB', true, true, true,0);        
 
 %busquedaHeuristica(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest,1,0);
 %busquedaHeuristica(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest,0,8);
 
-chainsClassifier(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, 'RL');
+chainsClassifier(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, 'NB');
+chainsClassifier(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, 'RF');

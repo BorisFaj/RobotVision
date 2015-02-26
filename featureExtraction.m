@@ -1,4 +1,8 @@
 function [featuresForTraining, featuresForTest, clasesForTraining, clasesForTest, objectsForTraining, objectsForTest] = featureExtraction(Configuration)
+%
+% Falta extraer la informacion del validation set. Para eso, primero hay
+% que adaptar el fichero de configuracion y despues en este script hacer lo
+% mismo que para los otros datasets
 
 showSurface = true;
 % Visualization screens
@@ -20,6 +24,7 @@ binFirstCentroid = binSize/2;
 % Estimate the number of training and test frames from sampling values
 
 trainingFiles = floor(Configuration.trainingSamplingRate * Configuration.trainingFiles);
+validationFiles = floor(Configuration.validationSamplingRate * Configuration.validationFiles);
 testFiles = floor(Configuration.testSamplingRate * Configuration.testFiles);
 
 
@@ -28,12 +33,14 @@ testFiles = floor(Configuration.testSamplingRate * Configuration.testFiles);
 if strcmp(Configuration.visualFeatures,'histo')
     
     visualFeaturesTraining = zeros(trainingFiles,256);
+    visualFeaturesValidation = zeros(testFiles,256);
     visualFeaturesTest = zeros(testFiles,256);
 end
 
 if strcmp(Configuration.depthFeatures,'histo')
     
     depthFeaturesTraining = zeros(trainingFiles,Configuration.binsDepth);
+    depthFeaturesValidation = zeros(validationFiles,Configuration.binsDepth);
     depthFeaturesTest = zeros(testFiles,Configuration.binsDepth);
 end
 

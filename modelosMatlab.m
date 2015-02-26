@@ -1,8 +1,8 @@
 function [FScores, resultados] = modelosMatlab(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, objetosEvaluar, modelo, entrenar, clasificar, guardar,X)
 %   Aviso: Si NO se entena y SI se clasifica, no va bien porque no cuenta los TP, etc
 %
-%   modelo: 'NB'|'RL'|'RF'
-%    (Naive Bayes, Regresion Logistica, Random Forest)
+%   modelo: 'NB'|'RL'|'RF'|'DT'|'SVM'
+%    (Naive Bayes, Regresion Logistica, Random Forest, Decision Tree, SVM)
 %
 %   clasificar: true|false
 %    (si ademas de aprender los modelos hay que clasificar el training y
@@ -29,8 +29,12 @@ y = categorical(objectsForTraining);
         elseif(strcmp('RF',modelo))
             rng(1);
             clasificador = TreeBagger(50,featuresForTraining,y(indice,:)','OOBPred','On');
+        elseif(strcmp('DT',modelo))
+            clasificador = fitctree(X,y(indice,:)');    
+        elseif(strcmp('SVM',modelo))
+            clasificador = fitcsvm(X,y(indice,:)');            
         else
-            error('ERROR! El parametro modelo de la funcion modelosWeka solo admite las cadenas: NB|RL|RF (Naive Bayes, Regresion Logistica, Random Forest)');
+            error('ERROR! El parametro modelo de la funcion modelosWeka solo admite las cadenas: NB|RL|RF|DT|SVM (Naive Bayes, Regresion Logistica, Random Forest, Decision Tree)');
         end
 
         if(clasificar)
@@ -43,9 +47,15 @@ y = categorical(objectsForTraining);
                 predicted = predicted(:,1);
                 predicted = predicted<=0.5;
             elseif(strcmp('RF',modelo))
-                predicted = str2num(cell2mat(clasificador.predict(featuresForTest)));                
+                predicted = str2num(cell2mat(clasificador.predict(featuresForTest)));        
+            elseif(strcmp('DT',modelo))
+                predicted = clasificador.predict(featuresForTest);    
+                predicted = predicted == categorical(1);
+            elseif(strcmp('SVM',modelo))
+                [label,score] = predict(clasificador,featuresForTest);
+                predicted = label == categorical(1);                 
             else
-                error('ERROR! El parametro modelo de la funcion modelosWeka solo admite las cadenas: NB|RL|RF (Naive Bayes, Regresion Logistica, Random Forest)');
+                error('ERROR! El parametro modelo de la funcion modelosWeka solo admite las cadenas: NB|RL|RF|DT|SVM (Naive Bayes, Regresion Logistica, Random Forest, Decision Tree)');
             end
 
             %The actual class labels (i.e. indices thereof)
@@ -70,7 +80,7 @@ y = categorical(objectsForTraining);
             resultados(m,1) = TP/(TP+FN); %recall
             resultados(m,2) = TP/(TP+FP); %precision
             resultados(m,3) = 2*resultados(m,2)*resultados(m,1)/(resultados(m,2)+resultados(m,1)); %FScore
-            resultados(m,4) = NaN; %error rate
+            resultados(m,4) = (TP+TN)/(TP+TN+FP+FN); %accuracy
             resultados(m,5) = TP; %TP
             resultados(m,6) = TN; %TN
             resultados(m,7) = FP; %FP
@@ -97,7 +107,7 @@ if(clasificar)
     resultados(numel(objetosEvaluar)+1, 1) = TP/(TP+FN);
     resultados(numel(objetosEvaluar)+1, 2) = TP/(TP+FP);
     resultados(numel(objetosEvaluar)+1, 3) = 2*resultados(numel(objetosEvaluar)+1, 2)*resultados(numel(objetosEvaluar)+1, 1)/(resultados(numel(objetosEvaluar)+1, 2)+resultados(numel(objetosEvaluar)+1, 1));
-    resultados(numel(objetosEvaluar)+1, 4) = 1-((TP+TN)/total);
+    resultados(numel(objetosEvaluar)+1, 4) = (TP+TN)/total;
     
     %Calcular las tasas locales de TP, TN, etc (machacando los valores
     %absolutos de cada objeto)
@@ -120,7 +130,7 @@ if(clasificar)
         obj = [obj; cellstr(strcat('Obj',num2str(o)))];
     end
     obj = [obj;cellstr('Total')];
-    et = [cellstr('-') cellstr('Recall') cellstr('Precision') cellstr('FScore') cellstr('Error Rate') cellstr('TP%') cellstr('TN%') cellstr('FP%') cellstr('FN%')];
+    et = [cellstr('-') cellstr('Recall') cellstr('Precision') cellstr('FScore') cellstr('Accuracy') cellstr('TP%') cellstr('TN%') cellstr('FP%') cellstr('FN%')];
 
     resultados = [obj resultados];
     resultados = [et;resultados];
