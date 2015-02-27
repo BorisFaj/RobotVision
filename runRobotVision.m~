@@ -51,7 +51,7 @@ showDatasetStats(Configuration);
 
 % Seleccion de caracteristicas
 [featuresForTraining, featuresForTest] = seleccionCaracteristicas(Configuration, featuresForTraining, featuresForTest);
-%extraerTransacciones(Configuration, objectsForTraining, clasesForTraining);
+aPriori(Configuration, featuresForTraining, objectsForTraining, clasesForTraining);
 
 %Exportacion a arff
 %extraerDataSet();
@@ -70,4 +70,4 @@ showDatasetStats(Configuration);
 
 %chainsClassifier(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, 'RF');
 
-clasificaHabitaciones(Configuration, featuresForTraining, featuresForTest, clasesForTraining, clasesForTest, 'NB', true, false, 'e')
+%clasificaHabitaciones(Configuration, featuresForTraining, featuresForTest, clasesForTraining, clasesForTest, 'RF', true, false, 'e')

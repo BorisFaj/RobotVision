@@ -34,7 +34,7 @@ y = categorical(objectsForTraining);
         elseif(strcmp('SVM',modelo))
             clasificador = fitcsvm(X,y(indice,:)');            
         else
-            error('ERROR! El parametro modelo de la funcion modelosWeka solo admite las cadenas: NB|RL|RF|DT|SVM (Naive Bayes, Regresion Logistica, Random Forest, Decision Tree)');
+            error('ERROR! El parametro modelo de la funcion modelosMatlab solo admite las cadenas: NB|RL|RF|DT|SVM (Naive Bayes, Regresion Logistica, Random Forest, Decision Tree)');
         end
 
         if(clasificar)
