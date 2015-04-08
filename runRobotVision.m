@@ -34,12 +34,12 @@ javaclasspath(dpath)
 
 load('ConfigurationReleaseParticipants.mat')
 %load('ConfigurationReleaseTiny.mat')
-load('featuresForTraining.mat')
-load('featuresForTest.mat')
-load('clasesForTraining.mat')
-load('clasesForTest.mat')
-load('objectsForTraining.mat')
-load('objectsForTest.mat')
+load('datos/featuresForTraining.mat')
+load('datos/featuresForTest.mat')
+load('datos/clasesForTraining.mat')
+load('datos/clasesForTest.mat')
+load('datos/objectsForTraining.mat')
+load('datos/objectsForTest.mat')
 
 Configuration.visualizeImageInfo = false;
 Configuration.useDepth = true;
