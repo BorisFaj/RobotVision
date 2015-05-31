@@ -49,9 +49,23 @@ showDatasetStats(Configuration);
 
 %[featuresForTraining, featuresForTest, clasesForTraining, clasesForTest, objectsForTraining, objectsForTest] = featureExtraction (Configuration);
 
+%Para hacer cross validation hay que juntar primero el dataset
+features = [featuresForTraining;featuresForTest];
+objects = [objectsForTraining objectsForTest];
+rooms = [clasesForTraining;clasesForTest];
+
+CVO=cvpartition(rooms,'k',5);
+for i = 1:CVO.NumTestSets
+    trIdx = CVO.training(i);
+    teIdx = CVO.test(i);
+    ytest = classify(features(teIdx,:),features(trIdx,:),rooms(trIdx,:),rooms(teIdx,:));
+    err(i) = sum(~strcmp(ytest,species(teIdx)));
+end
+cvErr = sum(err)/sum(CVO.TestSize);
+
 % Seleccion de caracteristicas
 [featuresForTraining, featuresForTest] = seleccionCaracteristicas(Configuration, featuresForTraining, featuresForTest);
-extraerTransacciones(Configuration, objectsForTraining, clasesForTraining);
+
 
 %Exportacion a arff
 %extraerDataSet();
