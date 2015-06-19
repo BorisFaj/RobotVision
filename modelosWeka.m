@@ -1,4 +1,4 @@
-function modelosWeka(Configuration, train, test, classindex, modelo, entrenar, clasificar)
+function metricas = modelosWeka(Configuration, train, test, classindex, modelo, entrenar, clasificar)
 %   Aviso: Si NO se entena y SI se clasifica, no va bien porque no cuenta los TP, etc
 %
 %   modelo: 'NB'|'RL'|'RF'
@@ -12,19 +12,21 @@ resultados = zeros(Configuration.numObjects+1,8);
 if(entrenar)
     fprintf(['Entrenando el clasificador ' modelo '\n']);
 
-    for m=1:Configuration.numObjects
+    for m=1:1
         %Train the classifier
         if(strcmp('NB',modelo))
             clasificador = trainWekaClassifier(train(m),'bayes.NaiveBayes');
         elseif(strcmp('RL',modelo))
             clasificador = trainWekaClassifier(train(m),'functions.Logistic');
-        elseif(strcmp('RF',modelo))
-            clasificador = trainWekaClassifier(train(m),'trees.RandomForest');
+        elseif(strcmp('C45',modelo))
+            clasificador = trainWekaClassifier(train(m),'trees.J48');
+        elseif(strcmp('SVM',modelo))
+            clasificador = trainWekaClassifier(train(m),'functions.SMO');            
         else
             error('ERROR! El parametro modelo de la funcion modelosWeka solo admite las cadenas: NB|RL|RF (Naive Bayes, Regresion Logistica, Random Forest)');
         end
 
-        save(strcat('modelo',modelo,'Weka.mat'), 'clasificador');
+        %save(strcat('modelo',modelo,'Weka.mat'), 'clasificador');
 
         if(clasificar)
             %Test the classifier
@@ -64,7 +66,7 @@ if(entrenar)
         end
     end
 else
-    load(strcat('modelo',modelo,'Weka.mat'));
+    %load(strcat('modelo',modelo,'Weka.mat'));
 end
 %Si NO se entena y SI se clasifica, no va bien porque no cuenta los TP, etc
 if(clasificar)
@@ -75,10 +77,10 @@ if(clasificar)
     FP = sum(resultados(:,7));
     FN = sum(resultados(:,8));
     total = sum(sum(resultados(:, [5 6 7 8])));
-    resultados(Configuration.numObjects+1, 5) = TP/(TP+FN)
-    resultados(Configuration.numObjects+1, 6) = TN/(TN+FP)
-    resultados(Configuration.numObjects+1, 7) = FP/(TN+FP)
-    resultados(Configuration.numObjects+1, 8) = FN/(TP+FN)
+    resultados(Configuration.numObjects+1, 5) = TP/(TP+FN);
+    resultados(Configuration.numObjects+1, 6) = TN/(TN+FP);
+    resultados(Configuration.numObjects+1, 7) = FP/(TN+FP);
+    resultados(Configuration.numObjects+1, 8) = FN/(TP+FN);
     
     resultados(Configuration.numObjects+1, 1) = TP/(TP+FN);
     resultados(Configuration.numObjects+1, 2) = TP/(TP+FP);
@@ -91,7 +93,7 @@ if(clasificar)
     
     %Calcular las tasas locales de TP, TN, etc (machacando los valores
     %absolutos de cada objeto)
-    for n=1:Configuration.numObjects
+    for n=1:1
         totalP = sum(resultados(n, [5 8]));
         totalN = sum(resultados(n, [6 7]));
         resultados(n,5) = resultados(n,5)/totalP; %TP
@@ -100,14 +102,15 @@ if(clasificar)
         resultados(n,8) = resultados(n,8)/totalP; %FN
     end
 
+    metricas = resultados(1,:);
     %Poner las etiquetas
-    resultados = num2cell(resultados);
-    obj = [cellstr('Obj1');cellstr('Obj2');cellstr('Obj3');cellstr('Obj4');cellstr('Obj5');cellstr('Obj6');cellstr('Obj7');cellstr('Obj8');cellstr('Total')];
-    et = [cellstr('-') cellstr('Recall') cellstr('Precision') cellstr('FScore') cellstr('Error Rate') cellstr('TP%') cellstr('TN%') cellstr('FP%') cellstr('FN%')];
+    %resultados = num2cell(resultados);    
+    %obj = [cellstr('Obj1');cellstr('Obj2');cellstr('Obj3');cellstr('Obj4');cellstr('Obj5');cellstr('Obj6');cellstr('Obj7');cellstr('Obj8');cellstr('Total')];
+    %et = [cellstr('-') cellstr('Recall') cellstr('Precision') cellstr('FScore') cellstr('Error Rate') cellstr('TP%') cellstr('TN%') cellstr('FP%') cellstr('FN%')];
 
-    resultados = [obj resultados];
-    resultados = [et;resultados]
+    %resultados = [obj resultados];
+    %resultados = [et;resultados];
 
-    save(strcat('resultados',modelo,'Weka.mat'), 'resultados');
+    %save(strcat('resultados',modelo,'Weka.mat'), 'resultados');
 end
 end

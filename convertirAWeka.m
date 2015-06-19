@@ -30,10 +30,9 @@ if(calcular)
     end
 
     % Y entonces convertir los datos al formato
-    for m=1:Configuration.numObjects
-        train(m) = matlab2weka(strcat('obj',strcat(int2str(m),'-train')),nombres,[num2cell(featuresForTraining) clasesTrain(m,:)']);
-        test(m) =  matlab2weka(strcat('obj',strcat(int2str(m),'-test')),nombres,[num2cell(featuresForTest) clasesTest(m,:)']);
-    end
+    train = matlab2weka(strcat('obj',strcat(int2str(1),'-train')),nombres,[num2cell(featuresForTraining) clasesTrain(1,:)']);
+    test =  matlab2weka(strcat('obj',strcat(int2str(1),'-test')),nombres,[num2cell(featuresForTest) clasesTest(1,:)']);
+
     save trainWeka.mat train;
     save testWeka.mat test
 else
