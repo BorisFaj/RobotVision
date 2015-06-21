@@ -1,6 +1,8 @@
 function [train, test] = convertirAWeka(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, calcular)
 
 if(calcular)
+    clasesTrain = cell(size(objectsForTraining,1),size(objectsForTraining,2));
+    clasesTest = cell(size(objectsForTest,1),length(objectsForTest));
     % Lo primero que hay que hacer es convertir la clase a nominal
     nombres = cell(size(featuresForTraining,2)+1,1);
 

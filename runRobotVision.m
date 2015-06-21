@@ -53,6 +53,9 @@ showDatasetStats(Configuration);
 %extraerDataSet();
 %convertirMisDatos();
 
+% Seleccion de caracteristicas
+%[featuresForTraining, featuresForTest] = seleccionCaracteristicas(Configuration, featuresForTraining, featuresForTest);
+
 %Para hacer cross validation hay que juntar primero el dataset
 features = [featuresForTraining;featuresForTest];
 objects = [objectsForTraining objectsForTest];
@@ -68,19 +71,25 @@ metricasOBSVM = zeros(Configuration.numObjects+1,8);
 for ob=1:Configuration.numObjects
     CVO=cvpartition(objects(ob,:),'k',5);
     metricasCVNB = zeros(CVO.NumTestSets,8);
-    metricasCVRL = zeros(Configuration.numObjects+1,8);
-    metricasCVC45 = zeros(Configuration.numObjects+1,8);
-    metricasCVSVM = zeros(Configuration.numObjects+1,8);
+    metricasCVRL = zeros(CVO.NumTestSets,8);
+    metricasCVC45 = zeros(CVO.NumTestSets,8);
+    metricasCVSVM = zeros(CVO.NumTestSets,8);
     for i = 1:CVO.NumTestSets
         trIdx = CVO.training(i);
         teIdx = CVO.test(i);
 
-        [train, test] = convertirAWeka(Configuration, features(trIdx,:), features(teIdx,:), objects(ob,trIdx), objects(ob,teIdx), 1);    
-        metricasCVNB(i,:) = modelosWeka(Configuration, train, test, size(features,2)+1, 'NB', true, true);
-        metricasCVRL(i,:) = modelosWeka(Configuration, train, test, size(features,2)+1, 'RL', true, true);
-        metricasCVC45(i,:) = modelosWeka(Configuration, train, test, size(features,2)+1, 'C45', true, true);
-        metricasCVSVM(i,:) = modelosWeka(Configuration, train, test, size(features,2)+1, 'SVM', true, true);
+        [metricasCVC45(i,:), modeloC45] = modelosMatlab(Configuration, features(trIdx,:), features(teIdx,:), objects(ob,trIdx), objects(ob,teIdx), ob, 'DT', true, true);       
+        [metricasCVNB(i,:), modeloNB] = modelosMatlab(Configuration, features(trIdx,:), features(teIdx,:), objects(ob,trIdx), objects(ob,teIdx), ob, 'NB', true, true); 
+        [metricasCVRL(i,:), modeloRL] = modelosMatlab(Configuration, features(trIdx,:), features(teIdx,:), objects(ob,trIdx), objects(ob,teIdx), ob, 'RL', true, true);        
+        [metricasCVSVM(i,:), modeloSVM] = SVMObjetos(Configuration, features(trIdx,:), features(teIdx,:), objects(ob,trIdx), objects(ob,teIdx));                        
     end
+    %Guarda los modelos en ficheros, un modelo por objeto
+    save(strcat('modelos/C45_',num2str(ob)), 'modeloC45');
+    save(strcat('modelos/NB_',num2str(ob)), 'modeloNB');
+    save(strcat('modelos/RL_',num2str(ob)), 'modeloRL');
+    save(strcat('modelos/SVM_',num2str(ob)), 'modeloSVM');
+    
+    %Calcular la media de las metricas de todos los folds
     metricasOBNB(ob,:) = mean(metricasCVNB);
     metricasOBRL(ob,:) = mean(metricasCVRL);
     metricasOBC45(ob,:) = mean(metricasCVC45);
@@ -108,19 +117,172 @@ metricasOBSVM(9,:) = mean(metricasOBSVM(1:8,:));
 metricasOBSVM = num2cell(metricasOBSVM);
 metricasOBSVM = [obj metricasOBSVM];
 metricasOBSVM = [et;metricasOBSVM]
-save('medidas/metricasSVM', 'metricasOBSVM');
+save('medidas/metricasSVM', 'metricasOBSVM'); 
 
 
-% Seleccion de caracteristicas
-%[featuresForTraining, featuresForTest] = seleccionCaracteristicas(Configuration, featuresForTraining, featuresForTest);
 
-%mu = mean(featuresForTraining);
-%sigma = std(featuresForTraining);
-%X=bsxfun(@minus, featuresForTraining, mu);
-%X=bsxfun(@rdivide, X, sigma);
-%modelosMatlab(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, 1:8, 'RL', true, true, true,X);        
-%modelosMatlab(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, 1:8, 'RF', true, true, true,0);        
-%modelosMatlab(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, 1:8, 'NB', true, true, true,0);        
+% % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %                                                               %
+% %                   Clasificacion de habitaciones               %
+% %                                                               %
+% % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%Se estratifica
+CVO=cvpartition(rooms,'k',5);
+%Inicializar los accuracy para todos los casos
+accuracySVMSoloC = zeros(1,CVO.NumTestSets);
+accuracyNBSoloC = zeros(1,CVO.NumTestSets);
+accuracyC45SoloC = zeros(1,CVO.NumTestSets);
+accuracyRLSoloC = zeros(1,CVO.NumTestSets);
+
+accuracySVMSoloP = zeros(1,CVO.NumTestSets);
+accuracyNBSoloP = zeros(1,CVO.NumTestSets);
+accuracyC45SoloP = zeros(1,CVO.NumTestSets);
+accuracyRLSoloP = zeros(1,CVO.NumTestSets);
+
+accuracySVMPC = zeros(1,CVO.NumTestSets);
+accuracyNBPC = zeros(1,CVO.NumTestSets);
+accuracyC45PC = zeros(1,CVO.NumTestSets);
+accuracyRLPC = zeros(1,CVO.NumTestSets);
+
+accuracySVMSoloCl = zeros(1,CVO.NumTestSets);
+accuracyNBSoloCl = zeros(1,CVO.NumTestSets);
+accuracyC45SoloCl = zeros(1,CVO.NumTestSets);
+accuracyRLSoloCl = zeros(1,CVO.NumTestSets);
+
+accuracySVMCC = zeros(1,CVO.NumTestSets);
+accuracyNBCC = zeros(1,CVO.NumTestSets);
+accuracyC45CC = zeros(1,CVO.NumTestSets);
+accuracyRLCC = zeros(1,CVO.NumTestSets);
+
+for i = 1:CVO.NumTestSets
+    trIdx = CVO.training(i);
+    teIdx = CVO.test(i);
+
+    %Solo Caracteristicas
+    accuracyRLSoloC(i) = clasificaHabitaciones(Configuration, features(trIdx,:), features(teIdx,:), rooms(trIdx), rooms(teIdx), 'RL');
+    accuracyNBSoloC(i) = clasificaHabitaciones(Configuration, features(trIdx,:), features(teIdx,:), rooms(trIdx), rooms(teIdx), 'NB');
+    accuracyC45SoloC(i) = clasificaHabitaciones(Configuration, features(trIdx,:), features(teIdx,:), rooms(trIdx), rooms(teIdx), 'DT');
+    accuracySVMSoloC(i) = SVMHabitaciones(Configuration, features(trIdx,:), features(teIdx,:), rooms(trIdx), rooms(teIdx));
+    
+    %Calcular predicciones
+    prediccionesNBTr = zeros(CVO.TrainSize(1),Configuration.numObjects);
+    prediccionesNBTe = zeros(CVO.TestSize(1),Configuration.numObjects);
+    prediccionesRLTr = zeros(CVO.TrainSize(1),Configuration.numObjects);
+    prediccionesRLTe = zeros(CVO.TestSize(1),Configuration.numObjects);
+    prediccionesC45Tr = zeros(CVO.TrainSize(1),Configuration.numObjects);
+    prediccionesC45Te = zeros(CVO.TestSize(1),Configuration.numObjects);
+    prediccionesSVMTr = zeros(CVO.TrainSize(1),Configuration.numObjects);
+    prediccionesSVMTe = zeros(CVO.TestSize(1),Configuration.numObjects);
+    for ob=1:Configuration.numObjects
+        load(strcat('modelos/C45_',num2str(ob)), 'modeloC45');
+        load(strcat('modelos/NB_',num2str(ob)), 'modeloNB');
+        load(strcat('modelos/RL_',num2str(ob)), 'modeloRL');
+        load(strcat('modelos/SVM_',num2str(ob)), 'modeloSVM'); 
+        
+        %Predecir NB
+        predicted = (double(modeloNB.predict(features(trIdx,:)))-1);
+        prediccionesNBTr(:,ob) = predicted == 1;
+        
+        predicted = (double(modeloNB.predict(features(teIdx,:)))-1);
+        prediccionesNBTe(:,ob) = predicted == 1;
+        
+        %Predecir RL
+        predicted = mnrval(modeloRL,features(trIdx,:));
+        predicted = predicted(:,1);
+        prediccionesRLTr(:,ob) = predicted<=0.5;
+        
+        predicted = mnrval(modeloRL,features(teIdx,:));
+        predicted = predicted(:,1);
+        prediccionesRLTe(:,ob) = predicted<=0.5;
+        
+        %Predecir C45
+        predicted = modeloC45.predict(features(trIdx,:));    
+        prediccionesC45Tr(:,ob) = predicted == categorical(1);     
+        
+        predicted = modeloC45.predict(features(teIdx,:));    
+        prediccionesC45Te(:,ob) = predicted == categorical(1);   
+        
+        %Predecir SVM
+        [pred_oisvm_last,~]=model_predict(features(trIdx,:)',modeloSVM,0);
+        auxpred=pred_oisvm_last;
+        for n=1:numel(pred_oisvm_last)
+            if(pred_oisvm_last(n)==-1)
+                auxpred(n)=0;
+            else
+                auxpred(n)=1;
+            end
+        end
+        prediccionesSVMTr(:,ob) = auxpred;
+        
+        [pred_oisvm_last,~]=model_predict(features(teIdx,:)',modeloSVM,0);
+        auxpred=pred_oisvm_last;
+        for n=1:numel(pred_oisvm_last)
+            if(pred_oisvm_last(n)==-1)
+                auxpred(n)=0;
+            else
+                auxpred(n)=1;
+            end
+        end
+        prediccionesSVMTe(:,ob) = auxpred;
+
+    end
+    
+    %Solo Predicciones
+    accuracyRLSoloP(i) = clasificaHabitaciones(Configuration, prediccionesRLTr, prediccionesRLTe, rooms(trIdx), rooms(teIdx), 'RL');
+    accuracyNBSoloP(i) = clasificaHabitaciones(Configuration, prediccionesNBTr, prediccionesNBTe, rooms(trIdx), rooms(teIdx), 'NB');
+    accuracyC45SoloP(i) = clasificaHabitaciones(Configuration, prediccionesC45Tr, prediccionesC45Te, rooms(trIdx), rooms(teIdx), 'DT');
+    accuracySVMSoloP(i) = SVMHabitaciones(Configuration, prediccionesSVMTr, prediccionesSVMTe, rooms(trIdx), rooms(teIdx));
+    
+    %Caracteristicas + Predicciones
+    accuracyRLPC(i) = clasificaHabitaciones(Configuration, [features(trIdx,:), prediccionesRLTr], [features(teIdx,:), prediccionesRLTe], rooms(trIdx), rooms(teIdx), 'RL');
+    accuracyNBPC(i) = clasificaHabitaciones(Configuration, [features(trIdx,:), prediccionesNBTr], [features(teIdx,:), prediccionesNBTe], rooms(trIdx), rooms(teIdx), 'NB');
+    accuracyC45PC(i) = clasificaHabitaciones(Configuration, [features(trIdx,:), prediccionesC45Tr], [features(teIdx,:), prediccionesC45Te], rooms(trIdx), rooms(teIdx), 'DT');
+    accuracySVMPC(i) = SVMHabitaciones(Configuration, [features(trIdx,:), prediccionesSVMTr], [features(teIdx,:), prediccionesSVMTe], rooms(trIdx), rooms(teIdx));
+    
+    %Solo Clases
+    accuracyRLSoloCl(i) = clasificaHabitaciones(Configuration, objects(:,trIdx)', objects(:,teIdx)', rooms(trIdx), rooms(teIdx), 'RL');
+    accuracyNBSoloCl(i) = clasificaHabitaciones(Configuration, objects(:,trIdx)', objects(:,teIdx)', rooms(trIdx), rooms(teIdx), 'NB');
+    accuracyC45SoloCl(i) = clasificaHabitaciones(Configuration, objects(:,trIdx)', objects(:,teIdx)', rooms(trIdx), rooms(teIdx), 'DT');
+    accuracySVMSoloCl(i) = SVMHabitaciones(Configuration, objects(:,trIdx)', objects(:,teIdx)', rooms(trIdx), rooms(teIdx));
+    
+    %Caracteristicas + Clases
+    accuracyRLCC(i) = clasificaHabitaciones(Configuration, [features(trIdx,:), objects(:,trIdx)'], [features(teIdx,:), objects(:,teIdx)'], rooms(trIdx), rooms(teIdx), 'RL');
+    accuracyNBCC(i) = clasificaHabitaciones(Configuration, [features(trIdx,:), objects(:,trIdx)'], [features(teIdx,:), objects(:,teIdx)'], rooms(trIdx), rooms(teIdx), 'NB');
+    accuracyC45CC(i) = clasificaHabitaciones(Configuration, [features(trIdx,:), objects(:,trIdx)'], [features(teIdx,:), objects(:,teIdx)'], rooms(trIdx), rooms(teIdx), 'DT');
+    accuracySVMCC(i) = SVMHabitaciones(Configuration, [features(trIdx,:), objects(:,trIdx)'], [features(teIdx,:), objects(:,teIdx)'], rooms(trIdx), rooms(teIdx));
+end
+
+save('medidas/accuracySVMSoloC', 'accuracySVMSoloC'); 
+save('medidas/accuracyNBSoloC', 'accuracyNBSoloC'); 
+save('medidas/accuracyC45SoloC', 'accuracyC45SoloC'); 
+save('medidas/accuracyRLSoloC', 'accuracyRLSoloC'); 
+
+save('medidas/accuracySVMSoloP', 'accuracySVMSoloP'); 
+save('medidas/accuracyNBSoloP', 'accuracyNBSoloP'); 
+save('medidas/accuracyC45SoloP', 'accuracyC45SoloP'); 
+save('medidas/accuracyRLSoloP', 'accuracyRLSoloP'); 
+
+save('medidas/accuracySVMPC', 'accuracySVMPC'); 
+save('medidas/accuracyNBPC', 'accuracyNBPC'); 
+save('medidas/accuracyC45PC', 'accuracyC45PC'); 
+save('medidas/accuracyRLPC', 'accuracyRLPC'); 
+
+save('medidas/accuracySVMSoloCl', 'accuracySVMSoloCl'); 
+save('medidas/accuracyNBSoloCl', 'accuracyNBSoloCl'); 
+save('medidas/accuracyC45SoloCl', 'accuracyC45SoloCl'); 
+save('medidas/accuracyRLSoloCl', 'accuracyRLSoloCl'); 
+
+save('medidas/accuracySVMCC', 'accuracySVMCC'); 
+save('medidas/accuracyNBCC', 'accuracyNBCC'); 
+save('medidas/accuracyC45CC', 'accuracyC45CC'); 
+save('medidas/accuracyRLCC', 'accuracyRLCC'); 
+
+
 
 %busquedaHeuristica(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest,1,0);
 %busquedaHeuristica(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest,0,8);

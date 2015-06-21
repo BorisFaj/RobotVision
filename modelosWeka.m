@@ -1,4 +1,4 @@
-function metricas = modelosWeka(Configuration, train, test, classindex, modelo, entrenar, clasificar)
+function [metricas, clasificador] = modelosWeka(Configuration, train, test, classindex, modelo, entrenar, clasificar)
 %   Aviso: Si NO se entena y SI se clasifica, no va bien porque no cuenta los TP, etc
 %
 %   modelo: 'NB'|'RL'|'RF'
@@ -112,5 +112,8 @@ if(clasificar)
     %resultados = [et;resultados];
 
     %save(strcat('resultados',modelo,'Weka.mat'), 'resultados');
+else
+    [clase prob] = wekaClassify(test(m),clasificador);
+    metricas = prob(:,2);
 end
 end
