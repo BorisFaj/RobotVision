@@ -1,4 +1,4 @@
-function [resultados model_oisvm] = SVMObjetos(Configuration, featuresForTraining, featuresForTest, clasesForTraining, clasesForTest)
+function [resultados, model_oisvm, auxpred] = SVMObjetos(Configuration, featuresForTraining, featuresForTest, clasesForTraining, clasesForTest)
 
 verbose = false;
 
