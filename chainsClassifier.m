@@ -1,4 +1,4 @@
-function chainsClassifier(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, modelo, orden)
+function F1Score = chainsClassifier(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, modelo, orden)
 % Algunas funciones necesitan el tipo categorical para que no tome el
 % verdadero/falso como continuo
 y = categorical(objectsForTraining);
@@ -140,6 +140,7 @@ for n=1:9
     resultados(n,2) = resultados(n,2)/total;
     resultados(n,3) = resultados(n,3)/total;
 end
+F1Score=resultados(9,7);
 %Añado etiquetas
 et = [cellstr('TP') cellstr('FP') cellstr('TN') cellstr('FN') cellstr('Recall') cellstr('Precision') cellstr('FScore') cellstr('Accuracy') cellstr('Objeto')];
 resultados = num2cell(resultados);
