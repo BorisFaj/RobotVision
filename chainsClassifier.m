@@ -43,19 +43,14 @@ for m=1:Configuration.numObjects
         %FSS
         reducidoTr = seleccionCaracteristicas(featuresForTraining, orden(m), 'C45',m-1);
         reducidoTe = seleccionCaracteristicas(featuresForTest, orden(m), 'C45',m-1);
-        %Normaliza
-        mu = mean(reducidoTr);
-        sigma = std(reducidoTr);
-        X=bsxfun(@minus, reducidoTr, mu);
-        X=bsxfun(@rdivide, X, sigma);
 
-        DT = fitctree(X,y(orden(m),:)','SplitCriterion','deviance');
+        DT = fitctree(reducidoTr,y(orden(m),:)','SplitCriterion','deviance');
         predicted = DT.predict(reducidoTe);
         predicted = predicted == categorical(1);
     elseif(strcmp('SVM',modelo))
         %FSS
-        reducidoTr = seleccionCaracteristicas(featuresForTraining, orden(m), 'SVM',m-1);
-        reducidoTe = seleccionCaracteristicas(featuresForTest, orden(m), 'SVM',m-1);
+        reducidoTr = featuresForTraining;
+        reducidoTe = featuresForTest;
         [~, SVM, predicted] = SVMObjetos(Configuration, reducidoTr, reducidoTe, objectsForTraining(orden(m),:), objectsForTest(orden(m),:));     
         predicted = predicted';
     end
@@ -84,8 +79,9 @@ for m=1:Configuration.numObjects
         recall = (TP/(TP+FN));
         precision = (TP/(TP+FP));
         FScore = 2*precision*recall/(precision+recall);
+        accuracy = (TP+TN)/(TP+TN+FP+FN);
         %                 TP FP TN FN Recall Precision FScore clasificador
-        resultados(m,:) = [TP FP TN FN recall precision FScore orden(m)];
+        resultados(m,:) = [TP FP TN FN recall precision FScore accuracy orden(m)];
     end      
 
     %Se añade como caracteristica la prediccion realizada al TestSet
@@ -108,14 +104,15 @@ for m=1:Configuration.numObjects
         predicted = predicted == categorical(1);
     elseif(strcmp('SVM',modelo))      
         %Predecir SVM
-        [predicted,~]=model_predict(reducidoTr,SVM,0);
+        [predicted,~]=model_predict(reducidoTr',SVM,0);
         for n=1:numel(predicted)
-            if(pred_oisvm_last(n)==-1)
+            if(predicted(n)==-1)
                 predicted(n)=0;
             else
                 predicted(n)=1;
             end
         end
+        predicted = predicted';
     end
 
     featuresForTraining = [featuresForTraining predicted];
@@ -127,6 +124,7 @@ end
 
 %Apaño los resultados
 %Añado en la ultima fila las medias
+resultados(9,8) = (sum(resultados(:,1))+sum(resultados(:,3)))/sum(sum(resultados(:,1:4))); %Accuracy medio
 resultados(9,1:4) = sum(resultados(:,1:4));
 resultados(9,5) = resultados(9,1)/(resultados(9,1)+resultados(9,4)); %recall
 resultados(9,6) = resultados(9,1)/(resultados(9,1)+resultados(9,2)); %precision
@@ -143,7 +141,7 @@ for n=1:9
     resultados(n,3) = resultados(n,3)/total;
 end
 %Añado etiquetas
-et = [cellstr('TP') cellstr('FP') cellstr('TN') cellstr('FN') cellstr('Recall') cellstr('Precision') cellstr('FScore') cellstr('Objeto')];
+et = [cellstr('TP') cellstr('FP') cellstr('TN') cellstr('FN') cellstr('Recall') cellstr('Precision') cellstr('FScore') cellstr('Accuracy') cellstr('Objeto')];
 resultados = num2cell(resultados);
 resultados = [et;resultados]
 

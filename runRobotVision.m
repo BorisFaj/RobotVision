@@ -287,9 +287,9 @@ showDatasetStats(Configuration);
 % Ranking de objetos para clasificar habitaciones con CFS 1,2,5,6,3,4,8,7
 ordenCFS = [1,2,5,6,3,4,8,7];
 
-%chainsClassifier(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, 'SVM', ordenCFS);
-%chainsClassifier(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, 'NB', ordenCFS);
-chainsClassifier(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, 'DT', ordenCFS);
-chainsClassifier(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, 'RL', ordenCFS);
+chainsClassifier(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, 'SVM', ordenCFS);
+% chainsClassifier(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, 'NB', ordenCFS);
+% chainsClassifier(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, 'DT', ordenCFS);
+% chainsClassifier(Configuration, featuresForTraining, featuresForTest, objectsForTraining, objectsForTest, 'RL', ordenCFS);
 
 %clasificaHabitaciones(Configuration, featuresForTraining, featuresForTest, clasesForTraining, clasesForTest, 'NB', true, false, 'e')

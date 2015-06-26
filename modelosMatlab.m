@@ -27,10 +27,6 @@ y = categorical(objectsForTraining);
             rng(1);
             clasificador = TreeBagger(50,featuresForTraining,y','OOBPred','On');
         elseif(strcmp('DT',modelo))
-            mu = mean(featuresForTraining);
-            sigma = std(featuresForTraining);
-            X=bsxfun(@minus, featuresForTraining, mu);
-            X=bsxfun(@rdivide, X, sigma);  
             clasificador = fitctree(featuresForTraining,y','SplitCriterion','deviance');             
         else
             error('ERROR! El parametro modelo de la funcion modelosMatlab solo admite las cadenas: NB|RL|RF|DT|SVM (Naive Bayes, Regresion Logistica, Random Forest, Decision Tree)');
